@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.venv/
+venv/
+ENV/
+
+# Environment files
+.env
+.env.*
+
+# Logs
+*.log
+logs/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Test/runtime data
+.coverage
+.pytest_cache/
+
+# Local project data
+*.sqlite3
+*.db
+
+# Generated assets
+node_modules/
