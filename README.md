@@ -1,31 +1,32 @@
 # Open Source Jarvis
 
-Open Source Jarvis is a modular AI assistant ecosystem designed to combine voice interaction, streaming visualization, autonomous agent orchestration, and a shared documentation hub. The repository is organized into independent subsystems that can evolve together while remaining easy to navigate and extend.
+Open Source Jarvis is an AI assistant ecosystem built around a real-time voice-first runtime, a live visualizer, and a modular agent system. In the current setup, it runs with Open Code as the reasoning layer, Whisper for speech-to-text, Kokoro for text-to-speech, and a browser-based visual mask that reflects the assistant state in real time.
 
-## Repository overview
+## Core subsystems
 
-- `voice-line/` — Real-time voice assistant subsystem with orchestration logic and automation hooks.
-- `visualizer/` — Live stream visualization and monitoring interfaces.
-- `agency_agents/` — Agent knowledge base with organized markdown modules and specialist definitions.
-- `docs/` — Centralized documentation for onboarding, troubleshooting, and architecture references.
-- `.github/workflows/` — CI and automation scaffolding for future code validation.
+- `voice-line/` — Push-to-talk voice assistant named Doom. Handles STT, brain orchestration, TTS, and signal coordination.
+- `visualizer/` — Fullscreen browser scene that visualizes assistant state through a Doctor Doom-inspired metallic mask.
+- `agency_agents/` — Agent markdown library and task domain structure.
+- `docs/` — Unified documentation, setup, troubleshooting, and architecture notes.
+- `.github/workflows/` — CI scaffolding for future validation.
 
-## Included capabilities
+## Current stack
 
-- Voice-first interaction and command handling
-- Agent-driven workflow support
-- Shared memory and documentation patterns
-- Visual monitoring and real-time feedback loops
-- Modular architecture for local experimentation and future cloud deployment
+- STT: Whisper.cpp using the CUDA build and `ggml-small.en.bin`
+- Brain: Open Code CLI with `opencode/deepseek-v4-flash-free`
+- TTS: Kokoro FastAPI at `:8880` with voice `bm_daniel`
+- Input: Hold `Alt` to speak; release to send
+- IPC: File-based signal bus shared between voice and visual systems
 
-## Quick start
+## Working patterns and lessons learned
 
-1. Read the documentation in `docs/`.
-2. Set up the Python environment in `voice-line/`.
-3. Review the agent files in `agency_agents/`.
-4. Extend the functionality in the corresponding subsystem folders.
+- Prefer real runtime verification over synthetic success checks.
+- Use epoch-based time comparisons rather than browser-relative clocks.
+- Validate stale state behavior and restart processes after important edits.
+- Test visual behavior programmatically with deterministic render hooks.
+- Keep token use efficient when running local reasoning under tight constraints.
 
-## Project structure
+## Repository structure
 
 ```text
 open-source-jarvis/
@@ -39,6 +40,13 @@ open-source-jarvis/
 ├── README.md
 └── ...
 ```
+
+## Quick start
+
+1. Review the documentation in `docs/`.
+2. Set up the environment in `voice-line/`.
+3. Use the startup commands in the voice-line guide.
+4. Launch the visualizer and validate the signal bus state transitions.
 
 ## License
 
