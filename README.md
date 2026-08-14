@@ -54,6 +54,7 @@ open-source-jarvis/
 - [docs/INDEX.md](docs/INDEX.md)
 - [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
 - [docs/QUICK-START.md](docs/QUICK-START.md)
+- [docs/REPLICATION-GUIDE.md](docs/REPLICATION-GUIDE.md)
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - [docs/SKILLS-AND-KNOWLEDGE.md](docs/SKILLS-AND-KNOWLEDGE.md)
 

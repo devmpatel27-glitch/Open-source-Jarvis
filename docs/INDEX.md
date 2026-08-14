@@ -7,6 +7,7 @@ This documentation hub centralizes the real runtime knowledge for the Open Sourc
 ## Primary references
 
 - [QUICK-START.md](QUICK-START.md) — one-page setup guide for the current local runtime
+- [REPLICATION-GUIDE.md](REPLICATION-GUIDE.md) — step-by-step instructions for recreating the setup
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — common issue handling and debugging flow
 - [ARCHITECTURE.md](ARCHITECTURE.md) — end-to-end system design and runtime notes
 - [SKILLS-AND-KNOWLEDGE.md](SKILLS-AND-KNOWLEDGE.md) — reusable patterns and lessons learned
