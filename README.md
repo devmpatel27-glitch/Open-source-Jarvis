@@ -47,6 +47,15 @@ open-source-jarvis/
 2. Set up the environment in `voice-line/`.
 3. Use the startup commands in the voice-line guide.
 4. Launch the visualizer and validate the signal bus state transitions.
+5. Reuse the operational patterns in `docs/SKILLS-AND-KNOWLEDGE.md` when debugging or extending the system.
+
+## Documentation index
+
+- [docs/INDEX.md](docs/INDEX.md)
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- [docs/QUICK-START.md](docs/QUICK-START.md)
+- [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
+- [docs/SKILLS-AND-KNOWLEDGE.md](docs/SKILLS-AND-KNOWLEDGE.md)
 
 ## License
 

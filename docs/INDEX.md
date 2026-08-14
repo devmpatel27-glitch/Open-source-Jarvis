@@ -8,8 +8,9 @@ This documentation hub centralizes the real runtime knowledge for the Open Sourc
 
 - [QUICK-START.md](QUICK-START.md) — one-page setup guide for the current local runtime
 - [TROUBLESHOOTING.md](TROUBLESHOOTING.md) — common issue handling and debugging flow
-- [index.md](index.md) — master index for agent domains and system connections
 - [ARCHITECTURE.md](ARCHITECTURE.md) — end-to-end system design and runtime notes
+- [SKILLS-AND-KNOWLEDGE.md](SKILLS-AND-KNOWLEDGE.md) — reusable patterns and lessons learned
+- [index.md](index.md) — master index for agent domains and system connections
 
 ## System domains
 
