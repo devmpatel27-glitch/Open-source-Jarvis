@@ -56,6 +56,12 @@ Stale state files should be treated as invalid and reset explicitly to avoid gho
 
 The `agency_agents/` directory is the structured agent knowledge base. These files capture operational domains, execution workers, tasks, and specialized agent definitions that support the broader Jarvis ecosystem.
 
+## Memory integration
+
+The Obsidian memory adapter reads Markdown notes from a local vault, skips hidden directories such as `.obsidian`, extracts simple frontmatter, and persists embeddings with note metadata. The V1 implementation uses a portable JSON index and a small `Embedder` protocol. Sentence Transformers, FAISS, and `python-frontmatter` are optional production dependencies rather than CI requirements.
+
+See [OBSIDIAN-INTEGRATION.md](OBSIDIAN-INTEGRATION.md) and the diagram at [architecture-ai-jarvis.svg](architecture-ai-jarvis.svg).
+
 ## Documentation approach
 
 This repository should remain the canonical landing point for:

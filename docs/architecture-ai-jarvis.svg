@@ -1,0 +1,66 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="620" viewBox="0 0 1200 620" role="img" aria-labelledby="title desc">
+  <title id="title">Open Source Jarvis architecture</title>
+  <desc id="desc">Obsidian memory and push to talk audio flow into the voice line, Open Code brain, Kokoro speech, visualizer, and agent library.</desc>
+  <defs>
+    <style>
+      .box { fill: #17202b; stroke: #8ee6c4; stroke-width: 2; rx: 12; }
+      .memory { fill: #202b3a; stroke: #f0c674; stroke-width: 2; rx: 12; }
+      .text { fill: #f4f7f9; font: 18px sans-serif; text-anchor: middle; }
+      .small { fill: #cbd5df; font: 14px sans-serif; text-anchor: middle; }
+      .arrow { stroke: #8ee6c4; stroke-width: 3; fill: none; marker-end: url(#arrowhead); }
+      .dashed { stroke: #f0c674; stroke-dasharray: 8 6; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#8ee6c4" />
+    </marker>
+  </defs>
+
+  <rect class="memory" x="40" y="70" width="210" height="110" />
+  <text class="text" x="145" y="112">Obsidian Vault</text>
+  <text class="small" x="145" y="140">Markdown + frontmatter</text>
+  <text class="small" x="145" y="162">local memory source</text>
+
+  <rect class="box" x="330" y="70" width="230" height="110" />
+  <text class="text" x="445" y="112">Memory Adapter</text>
+  <text class="small" x="445" y="140">embed + persist index</text>
+  <text class="small" x="445" y="162">JSON / optional FAISS</text>
+
+  <rect class="box" x="40" y="300" width="210" height="110" />
+  <text class="text" x="145" y="342">Push to Talk</text>
+  <text class="small" x="145" y="370">Alt polling</text>
+  <text class="small" x="145" y="392">GetAsyncKeyState</text>
+
+  <rect class="box" x="330" y="300" width="230" height="110" />
+  <text class="text" x="445" y="342">Voice Line</text>
+  <text class="small" x="445" y="370">Whisper.cpp STT</text>
+  <text class="small" x="445" y="392">turn orchestration</text>
+
+  <rect class="box" x="670" y="180" width="220" height="110" />
+  <text class="text" x="780" y="222">Open Code Brain</text>
+  <text class="small" x="780" y="250">deepseek-v4-flash-free</text>
+  <text class="small" x="780" y="272">agent reasoning</text>
+
+  <rect class="box" x="950" y="70" width="210" height="110" />
+  <text class="text" x="1055" y="112">Kokoro TTS</text>
+  <text class="small" x="1055" y="140">port 8880</text>
+  <text class="small" x="1055" y="162">spoken response</text>
+
+  <rect class="box" x="950" y="300" width="210" height="110" />
+  <text class="text" x="1055" y="342">Visualizer</text>
+  <text class="small" x="1055" y="370">canvas 2D</text>
+  <text class="small" x="1055" y="392">ports 8777 / 8778</text>
+
+  <rect class="memory" x="330" y="500" width="230" height="80" />
+  <text class="text" x="445" y="535">Agency Agents</text>
+  <text class="small" x="445" y="560">domain knowledge</text>
+
+  <path class="arrow dashed" d="M250 125 H330" />
+  <path class="arrow" d="M250 355 H330" />
+  <path class="arrow" d="M560 355 C620 355 620 235 670 235" />
+  <path class="arrow dashed" d="M560 125 C650 125 650 210 670 210" />
+  <path class="arrow" d="M890 235 C930 235 930 125 950 125" />
+  <path class="arrow" d="M560 355 H950" />
+  <path class="arrow dashed" d="M560 540 C720 540 720 410 950 410" />
+
+  <text class="small" x="780" y="330">.voice_state / .voice_waveform</text>
+</svg>

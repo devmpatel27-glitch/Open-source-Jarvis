@@ -33,6 +33,10 @@ dist/
 # Local project data
 *.sqlite3
 *.db
+.jarvis/
+.voice_state
+.voice_waveform
+.voice_alert
 
 # Generated assets
 node_modules/

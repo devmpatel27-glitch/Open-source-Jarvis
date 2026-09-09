@@ -1,4 +1,4 @@
-# Open Source Jarvis 🎙️
+# Open Source Jarvis
 
 A voice-first AI assistant that listens, reasons, and talks back — running entirely
 on local, self-hosted infrastructure (no cloud API required).
@@ -21,6 +21,7 @@ Open Source Jarvis is an AI assistant ecosystem built around a real-time voice-f
 - `visualizer/` — Fullscreen browser scene that visualizes assistant state through a Doctor Doom-inspired metallic mask.
 - `agency_agents/` — Agent markdown library and task domain structure.
 - `docs/` — Unified documentation, setup, troubleshooting, and architecture notes (see docs/OBSIDIAN-INTEGRATION.md for memory integration).
+- `tests/` — Obsidian memory fixtures and CI-safe adapter tests.
 - `.github/workflows/` — CI scaffolding for future validation.
 
 ## Current stack
@@ -31,6 +32,17 @@ Open Source Jarvis is an AI assistant ecosystem built around a real-time voice-f
 - TTS: Kokoro FastAPI at `:8880` with voice `bm_daniel`
 - Input: Hold `Alt` to speak; release to send
 - IPC: File-based signal bus shared between voice and visual systems
+
+## Obsidian memory
+
+The V1 memory adapter reads Markdown notes from an Obsidian vault, extracts simple frontmatter, creates embeddings through a replaceable provider, and persists a local JSON vector index. The standard-library implementation is CI-safe; optional production dependencies are available through the `memory` extra:
+
+```powershell
+cd voice-line
+pip install -e ".[memory]"
+```
+
+See [docs/OBSIDIAN-INTEGRATION.md](docs/OBSIDIAN-INTEGRATION.md) for setup, privacy guidance, and migration notes.
 
 ## Working patterns and lessons learned
 
@@ -47,6 +59,7 @@ open-source-jarvis/
 ├── .github/workflows/
 ├── agency_agents/
 ├── docs/
+├── tests/
 ├── voice-line/
 ├── visualizer/
 ├── .gitignore
