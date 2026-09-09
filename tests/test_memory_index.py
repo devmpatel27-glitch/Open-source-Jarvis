@@ -5,7 +5,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parents[1] / "voice-line"))
 
-from memory_adapter import MemoryIndex, build_index  # noqa: E402
+from memory_adapter import MemoryIndex, build_index, format_memory_block  # noqa: E402
 
 
 class DummyEmbedder:
@@ -60,3 +60,33 @@ def test_private_notes_are_excluded(tmp_path: Path) -> None:
     index = MemoryIndex.build(vault, DummyEmbedder())
 
     assert [entry.note.path for entry in index.entries] == ["public.md"]
+
+
+def test_sensitive_notes_and_long_notes_are_handled(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    vault.mkdir()
+    (vault / "sensitive.md").write_text(
+        "---\nvisibility: sensitive\n---\nnot for indexing",
+        encoding="utf-8",
+    )
+    (vault / "long.md").write_text(
+        "---\ntitle: Long Note\ntags: [memory]\n---\n\n"
+        "First paragraph with [[Linked Note]].\n\nSecond paragraph with more detail.",
+        encoding="utf-8",
+    )
+
+    index = MemoryIndex.build(vault, DummyEmbedder(), chunk_size=24)
+
+    assert len(index.entries) > 1
+    assert all(entry.note.path == "long.md" for entry in index.entries)
+    assert all(len(entry.note.content) <= 24 for entry in index.entries)
+    assert index.entries[0].note.metadata["wikilinks"] == ["Linked Note"]
+
+
+def test_memory_prompt_has_a_hard_character_budget() -> None:
+    hits = [{"meta": {"title": "Long", "path": "long.md"}, "snippet": "x" * 200}]
+
+    block = format_memory_block(hits, max_chars=80)
+
+    assert len(block) <= 80
+    assert block.endswith("[END MEMORY]")

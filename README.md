@@ -33,6 +33,8 @@ Hardware note: a GPU is recommended for Whisper and larger local models; CPU-onl
 - [Architecture diagram](docs/architecture-ai-jarvis.svg)
 - [Project memory runbook](docs/PROJECT-MEMORY.md)
 
+The visualizer state contract is documented in [visualizer/README.md](visualizer/README.md); its full browser implementation is not included in this checkout.
+
 ## Working patterns and lessons learned
 
 - Prefer real runtime verification over synthetic success checks.

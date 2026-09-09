@@ -14,6 +14,7 @@ This documentation hub centralizes the real runtime knowledge for the Open Sourc
 - [SKILLS-AND-KNOWLEDGE.md](SKILLS-AND-KNOWLEDGE.md) — reusable patterns and lessons learned
 - [OBSIDIAN-INTEGRATION.md](OBSIDIAN-INTEGRATION.md) — Obsidian memory adapter guide
 - [PROJECT-MEMORY.md](PROJECT-MEMORY.md) — operational runbook and verified fixes
+- [../CONTRIBUTING.md](../CONTRIBUTING.md) — contributor and validation workflow
 - [index.md](index.md) — master index for agent domains and system connections
 
 ## System domains

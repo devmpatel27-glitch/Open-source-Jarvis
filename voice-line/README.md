@@ -47,4 +47,4 @@ python memory_adapter.py --build
 The orchestration path calls `MemoryAdapter.load_index()` once, retrieves the
 top three hits for each user request, and injects a provenance-rich
 `[RELEVANT MEMORY]` block before conversation history is sent to Open Code.
-Private notes (`visibility: private`) are excluded from the index.
+Only public notes (`visibility: public`) are indexed; private and sensitive notes are excluded. `MEMORY_CHUNK_SIZE` controls note chunks and `MEMORY_MAX_CHARS` caps the prompt memory block.

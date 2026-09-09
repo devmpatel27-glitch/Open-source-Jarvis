@@ -61,6 +61,30 @@ def _parse_scalar(value: str) -> Any:
     return value.strip("'\"")
 
 
+def _parse_wikilinks(text: str) -> list[str]:
+    return re.findall(r"\[\[([^\]]+)\]\]", text)
+
+
+def _chunk_text(text: str, chunk_size: int) -> list[str]:
+    """Split notes at paragraph boundaries while respecting a character cap."""
+    if chunk_size < 1:
+        raise ValueError("chunk_size must be at least 1")
+    paragraphs = [part.strip() for part in re.split(r"\n\s*\n", text) if part.strip()]
+    chunks: list[str] = []
+    current = ""
+    for paragraph in paragraphs:
+        if current and len(current) + len(paragraph) + 2 > chunk_size:
+            chunks.append(current)
+            current = ""
+        while len(paragraph) > chunk_size:
+            chunks.append(paragraph[:chunk_size].strip())
+            paragraph = paragraph[chunk_size:]
+        current = f"{current}\n\n{paragraph}".strip() if current else paragraph
+    if current:
+        chunks.append(current)
+    return chunks or [""]
+
+
 def parse_markdown(path: Path, root: Path) -> Note:
     """Read one Obsidian note without requiring PyYAML or frontmatter."""
     raw = path.read_text(encoding="utf-8")
@@ -96,7 +120,7 @@ class MemoryIndex:
         self.entries = list(entries)
 
     @classmethod
-    def build(cls, vault: Path, embedder: Embedder) -> "MemoryIndex":
+    def build(cls, vault: Path, embedder: Embedder, chunk_size: int = 600) -> "MemoryIndex":
         vault = vault.expanduser().resolve()
         if not vault.is_dir():
             raise FileNotFoundError(f"Obsidian vault does not exist: {vault}")
@@ -105,10 +129,17 @@ class MemoryIndex:
             if any(part.startswith(".") for part in path.relative_to(vault).parts):
                 continue
             note = parse_markdown(path, vault)
-            if str(note.metadata.get("visibility", "public")).lower() == "private":
-                logger.info("Skipping private note: %s", note.path)
+            if str(note.metadata.get("visibility", "public")).lower() != "public":
+                logger.info("Skipping non-public note: %s", note.path)
                 continue
-            entries.append(IndexedNote(note=note, vector=list(embedder.embed(f"{note.title}\n{note.content}"))))
+            wikilinks = _parse_wikilinks(note.content)[:10]
+            chunks = _chunk_text(note.content, chunk_size)
+            for chunk_index, chunk in enumerate(chunks):
+                chunk_metadata = {**note.metadata, "chunk_index": chunk_index, "wikilinks": wikilinks}
+                chunk_note = Note(note.path, note.title, chunk, chunk_metadata)
+                entries.append(
+                    IndexedNote(note=chunk_note, vector=list(embedder.embed(f"{note.title}\n{chunk}")))
+                )
         return cls(entries)
 
     def search(self, query: str, embedder: Embedder, top_k: int = 5) -> list[tuple[float, Note]]:
@@ -144,9 +175,14 @@ class MemoryIndex:
         return cls(entries)
 
 
-def build_index(vault_path: str | Path, index_path: str | Path, embedder: Embedder) -> MemoryIndex:
+def build_index(
+    vault_path: str | Path,
+    index_path: str | Path,
+    embedder: Embedder,
+    chunk_size: int = 600,
+) -> MemoryIndex:
     """Build and persist an index from an Obsidian vault."""
-    index = MemoryIndex.build(Path(vault_path), embedder)
+    index = MemoryIndex.build(Path(vault_path), embedder, chunk_size=chunk_size)
     index.save(Path(index_path))
     return index
 
@@ -184,11 +220,12 @@ class MemoryAdapter:
 
     def __init__(self, index_path: str | Path | None = None, embedder: Embedder | None = None) -> None:
         self.index_path = Path(index_path or os.getenv("MEMORY_INDEX_PATH", ".jarvis/memory-index.json")).expanduser()
-        metadata_path = os.getenv("MEMORY_METADATA_PATH")
-        self.metadata_path = Path(metadata_path).expanduser() if metadata_path else None
+        metadata_path = os.getenv("MEMORY_METADATA_PATH", ".jarvis/memory-metadata.json")
+        self.metadata_path = Path(metadata_path).expanduser()
         self.embedder = embedder or create_embedder()
         self.index: MemoryIndex | None = None
         self.chunk_size = int(os.getenv("MEMORY_CHUNK_SIZE", "600"))
+        self.max_memory_chars = int(os.getenv("MEMORY_MAX_CHARS", "4000"))
 
     def load_index(self) -> MemoryIndex:
         """Load the index once at runtime; an absent index means no memories."""
@@ -209,7 +246,7 @@ class MemoryAdapter:
         ]
 
     def build(self, vault_path: str | Path) -> MemoryIndex:
-        self.index = build_index(vault_path, self.index_path, self.embedder)
+        self.index = build_index(vault_path, self.index_path, self.embedder, chunk_size=self.chunk_size)
         if self.metadata_path:
             self.metadata_path.parent.mkdir(parents=True, exist_ok=True)
             metadata = [
@@ -229,8 +266,11 @@ def create_embedder() -> Embedder:
     raise ValueError(f"Unsupported EMBEDDING_BACKEND: {backend}")
 
 
-def format_memory_block(hits: Sequence[dict[str, Any]]) -> str:
+def format_memory_block(hits: Sequence[dict[str, Any]], max_chars: int = 4000) -> str:
     """Format retrieved notes as a bounded, provenance-rich prompt section."""
+    suffix = "\n[END MEMORY]"
+    if max_chars < len(suffix):
+        raise ValueError(f"max_chars must be at least {len(suffix)}")
     if not hits:
         return "[RELEVANT MEMORY]\nNo relevant memory was retrieved.\n[END MEMORY]"
     sections = []
@@ -241,7 +281,10 @@ def format_memory_block(hits: Sequence[dict[str, Any]]) -> str:
             f"=== RELEVANT MEMORY ({meta.get('title', 'Untitled')}, {date}) ===\n"
             f"Source: {meta.get('path', '')}\n{hit['snippet']}\n=== END MEMORY ==="
         )
-    return "[RELEVANT MEMORY]\n" + "\n\n".join(sections) + "\n[END MEMORY]"
+    block = "[RELEVANT MEMORY]\n" + "\n\n".join(sections) + "\n[END MEMORY]"
+    if len(block) <= max_chars:
+        return block
+    return block[: max_chars - len(suffix)].rstrip() + suffix
 
 
 def build_augmented_prompt(
@@ -253,7 +296,7 @@ def build_augmented_prompt(
 ) -> str:
     """Retrieve memory and inject it between system instructions and history."""
     adapter.load_index()
-    memory_block = format_memory_block(adapter.search(user_input, k=k))
+    memory_block = format_memory_block(adapter.search(user_input, k=k), adapter.max_memory_chars)
     return f"{system_instructions}\n\n{memory_block}\n\n{conversation_history}\n\nUser: {user_input}"
 
 

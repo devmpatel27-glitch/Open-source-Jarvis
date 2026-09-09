@@ -59,7 +59,7 @@ visibility: public
 ---
 ```
 
-Set `visibility: private` for sensitive notes. V1 excludes those notes from the index.
+Set `visibility: private` or `visibility: sensitive` for notes that must not be indexed. V1 indexes only notes with `visibility: public`.
 
 ## Example usage
 
@@ -93,6 +93,7 @@ $env:OB_VAULT_PATH = "C:\Users\devpa\Brain\Doom's Digital Consciousness"
 $env:MEMORY_INDEX_PATH = ".jarvis\memory-index.json"
 $env:MEMORY_METADATA_PATH = ".jarvis\memory-metadata.json"
 $env:MEMORY_CHUNK_SIZE = "600"
+$env:MEMORY_MAX_CHARS = "4000"
 $env:EMBEDDING_BACKEND = "dummy"
 python voice-line\memory_adapter.py --build
 python voice-line\memory_adapter.py --query "what did I say about project A?"
@@ -106,11 +107,11 @@ $env:EMBEDDING_BACKEND = "sentence-transformers"
 python voice-line\memory_adapter.py --build
 ```
 
-The index format is JSON in V1. It is intentionally portable; future FAISS integration can store a binary vector index beside the same metadata manifest. `MEMORY_METADATA_PATH` optionally writes a metadata-only JSON manifest for inspection and auditing.
+The index format is JSON in V1. It is intentionally portable; future FAISS integration can store a binary vector index beside the same metadata manifest. `MEMORY_METADATA_PATH` writes a metadata-only JSON manifest for inspection and auditing.
 
 ## Re-indexing policy
 
-Rebuild the index when notes change. `MEMORY_CHUNK_SIZE` controls the maximum retrieved snippet size and defaults to 600 characters. For a larger vault, add file hashes and modification times so unchanged notes can be reused instead of re-embedded. V1 deliberately keeps the format small and explicit before adding incremental indexing.
+Rebuild the index when notes change. `MEMORY_CHUNK_SIZE` controls the maximum chunk size and defaults to 600 characters. `MEMORY_MAX_CHARS` caps the complete memory block injected into prompts and defaults to 4000 characters. For a larger vault, add file hashes and modification times so unchanged notes can be reused instead of re-embedded. V1 deliberately keeps the format small and explicit before adding incremental indexing.
 
 ## Runtime prompt integration
 
