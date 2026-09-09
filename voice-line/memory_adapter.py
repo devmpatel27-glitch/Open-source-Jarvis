@@ -260,9 +260,12 @@ class MemoryAdapter:
 def create_embedder() -> Embedder:
     backend = os.getenv("EMBEDDING_BACKEND", "dummy").lower()
     if backend == "dummy":
+        logger.info("Using dummy embedding backend")
         return DummyEmbedder()
     if backend == "sentence-transformers":
-        return SentenceTransformerEmbedder(os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2"))
+        model_name = os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2")
+        logger.info("Using sentence-transformers model %s", model_name)
+        return SentenceTransformerEmbedder(model_name)
     raise ValueError(f"Unsupported EMBEDDING_BACKEND: {backend}")
 
 
@@ -314,7 +317,7 @@ def main() -> None:
         if not args.vault:
             parser.error("--build requires --vault or OB_VAULT_PATH")
         index = adapter.build(args.vault)
-        print(f"Indexed {len(index.entries)} notes at {adapter.index_path}")
+        logger.info("Indexed %d chunks at %s", len(index.entries), adapter.index_path)
     if args.query:
         for hit in adapter.search(args.query, k=args.top_k):
             print(f"{hit['score']:.4f} {hit['meta']['title']} [{hit['meta']['path']}]")
@@ -323,4 +326,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     main()
