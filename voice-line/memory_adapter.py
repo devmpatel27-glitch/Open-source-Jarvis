@@ -8,11 +8,18 @@ This makes local Windows use simple and keeps CI deterministic.
 from __future__ import annotations
 
 import json
+import argparse
+import hashlib
+import logging
 import math
+import os
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Protocol, Sequence
+
+
+logger = logging.getLogger(__name__)
 
 
 class Embedder(Protocol):
@@ -98,6 +105,9 @@ class MemoryIndex:
             if any(part.startswith(".") for part in path.relative_to(vault).parts):
                 continue
             note = parse_markdown(path, vault)
+            if str(note.metadata.get("visibility", "public")).lower() == "private":
+                logger.info("Skipping private note: %s", note.path)
+                continue
             entries.append(IndexedNote(note=note, vector=list(embedder.embed(f"{note.title}\n{note.content}"))))
         return cls(entries)
 
@@ -139,3 +149,135 @@ def build_index(vault_path: str | Path, index_path: str | Path, embedder: Embedd
     index = MemoryIndex.build(Path(vault_path), embedder)
     index.save(Path(index_path))
     return index
+
+
+class DummyEmbedder:
+    """Deterministic local embedder for tests and smoke checks."""
+
+    def __init__(self, dimensions: int = 64) -> None:
+        self.dimensions = dimensions
+
+    def embed(self, text: str) -> list[float]:
+        vector = [0.0] * self.dimensions
+        for token in re.findall(r"[a-z0-9]+", text.lower()):
+            digest = hashlib.sha256(token.encode("utf-8")).digest()
+            vector[int.from_bytes(digest[:4], "big") % self.dimensions] += 1.0
+        return vector
+
+
+class SentenceTransformerEmbedder:
+    """Optional production embedder backed by sentence-transformers."""
+
+    def __init__(self, model_name: str = "all-MiniLM-L6-v2") -> None:
+        try:
+            from sentence_transformers import SentenceTransformer
+        except ImportError as exc:
+            raise RuntimeError('Install the optional memory dependencies with: pip install -e ".[memory]"') from exc
+        self.model = SentenceTransformer(model_name)
+
+    def embed(self, text: str) -> list[float]:
+        return [float(value) for value in self.model.encode(text, normalize_embeddings=True).tolist()]
+
+
+class MemoryAdapter:
+    """Runtime facade used by voice-line orchestration."""
+
+    def __init__(self, index_path: str | Path | None = None, embedder: Embedder | None = None) -> None:
+        self.index_path = Path(index_path or os.getenv("MEMORY_INDEX_PATH", ".jarvis/memory-index.json")).expanduser()
+        metadata_path = os.getenv("MEMORY_METADATA_PATH")
+        self.metadata_path = Path(metadata_path).expanduser() if metadata_path else None
+        self.embedder = embedder or create_embedder()
+        self.index: MemoryIndex | None = None
+        self.chunk_size = int(os.getenv("MEMORY_CHUNK_SIZE", "600"))
+
+    def load_index(self) -> MemoryIndex:
+        """Load the index once at runtime; an absent index means no memories."""
+        if self.index is None:
+            self.index = MemoryIndex.load(self.index_path) if self.index_path.exists() else MemoryIndex()
+        return self.index
+
+    def search(self, query: str, k: int = 3) -> list[dict[str, Any]]:
+        """Return auditable memory hits with title, path, metadata, and snippet."""
+        hits = self.load_index().search(query, self.embedder, top_k=k)
+        return [
+            {
+                "score": score,
+                "meta": {"title": note.title, "path": note.path, **note.metadata},
+                "snippet": note.content[: self.chunk_size].strip(),
+            }
+            for score, note in hits
+        ]
+
+    def build(self, vault_path: str | Path) -> MemoryIndex:
+        self.index = build_index(vault_path, self.index_path, self.embedder)
+        if self.metadata_path:
+            self.metadata_path.parent.mkdir(parents=True, exist_ok=True)
+            metadata = [
+                {"title": entry.note.title, "path": entry.note.path, **entry.note.metadata}
+                for entry in self.index.entries
+            ]
+            self.metadata_path.write_text(json.dumps(metadata, indent=2), encoding="utf-8")
+        return self.index
+
+
+def create_embedder() -> Embedder:
+    backend = os.getenv("EMBEDDING_BACKEND", "dummy").lower()
+    if backend == "dummy":
+        return DummyEmbedder()
+    if backend == "sentence-transformers":
+        return SentenceTransformerEmbedder(os.getenv("EMBEDDING_MODEL", "all-MiniLM-L6-v2"))
+    raise ValueError(f"Unsupported EMBEDDING_BACKEND: {backend}")
+
+
+def format_memory_block(hits: Sequence[dict[str, Any]]) -> str:
+    """Format retrieved notes as a bounded, provenance-rich prompt section."""
+    if not hits:
+        return "[RELEVANT MEMORY]\nNo relevant memory was retrieved.\n[END MEMORY]"
+    sections = []
+    for hit in hits:
+        meta = hit["meta"]
+        date = meta.get("created", "")
+        sections.append(
+            f"=== RELEVANT MEMORY ({meta.get('title', 'Untitled')}, {date}) ===\n"
+            f"Source: {meta.get('path', '')}\n{hit['snippet']}\n=== END MEMORY ==="
+        )
+    return "[RELEVANT MEMORY]\n" + "\n\n".join(sections) + "\n[END MEMORY]"
+
+
+def build_augmented_prompt(
+    system_instructions: str,
+    conversation_history: str,
+    user_input: str,
+    adapter: MemoryAdapter,
+    k: int = 3,
+) -> str:
+    """Retrieve memory and inject it between system instructions and history."""
+    adapter.load_index()
+    memory_block = format_memory_block(adapter.search(user_input, k=k))
+    return f"{system_instructions}\n\n{memory_block}\n\n{conversation_history}\n\nUser: {user_input}"
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Build or query an Obsidian memory index.")
+    parser.add_argument("--build", action="store_true", help="Build an index from an Obsidian vault")
+    parser.add_argument("--vault", default=os.getenv("OB_VAULT_PATH"), help="Path to the Obsidian vault")
+    parser.add_argument("--query", help="Search the persisted index")
+    parser.add_argument("--index", help="Override MEMORY_INDEX_PATH")
+    parser.add_argument("--top-k", type=int, default=3)
+    args = parser.parse_args()
+
+    adapter = MemoryAdapter(index_path=args.index)
+    if args.build:
+        if not args.vault:
+            parser.error("--build requires --vault or OB_VAULT_PATH")
+        index = adapter.build(args.vault)
+        print(f"Indexed {len(index.entries)} notes at {adapter.index_path}")
+    if args.query:
+        for hit in adapter.search(args.query, k=args.top_k):
+            print(f"{hit['score']:.4f} {hit['meta']['title']} [{hit['meta']['path']}]")
+            print(hit["snippet"])
+            print()
+
+
+if __name__ == "__main__":
+    main()

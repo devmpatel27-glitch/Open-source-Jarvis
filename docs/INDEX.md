@@ -13,6 +13,7 @@ This documentation hub centralizes the real runtime knowledge for the Open Sourc
 - [architecture-ai-jarvis.svg](architecture-ai-jarvis.svg) — visual system topology
 - [SKILLS-AND-KNOWLEDGE.md](SKILLS-AND-KNOWLEDGE.md) — reusable patterns and lessons learned
 - [OBSIDIAN-INTEGRATION.md](OBSIDIAN-INTEGRATION.md) — Obsidian memory adapter guide
+- [PROJECT-MEMORY.md](PROJECT-MEMORY.md) — operational runbook and verified fixes
 - [index.md](index.md) — master index for agent domains and system connections
 
 ## System domains
@@ -20,6 +21,7 @@ This documentation hub centralizes the real runtime knowledge for the Open Sourc
 - `voice-line/` — real-time voice assistant subsystem (`Doom`), STT + brain + TTS stack
 - `visualizer/` — browser-based stream visualizer with state-driven mask behavior
 - `agency_agents/` — the prepared multi-domain agent markdown collection
+- `agency_agents/skills/` — conventions for memory-aware agent skills
 - `tests/` — deterministic memory adapter fixtures and tests
 - `docs/` — project memory and operational guidance
 

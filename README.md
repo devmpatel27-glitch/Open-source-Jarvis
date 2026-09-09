@@ -1,48 +1,37 @@
 # Open Source Jarvis
 
-A voice-first AI assistant that listens, reasons, and talks back — running entirely
-on local, self-hosted infrastructure (no cloud API required).
-
-
-## What it does
-- Push-to-talk voice input (hold Alt to speak, release to send)
-- Local speech-to-text via Whisper.cpp
-- LLM reasoning/orchestration via Open Code
-- Local text-to-speech via Kokoro
-- A browser-based visualizer that reflects assistant state in real time, synced
-  through a file-based signal bus
-- Memory: persistent long-term memory backed by an Obsidian vault (see docs/OBSIDIAN-INTEGRATION.md)
-
-Open Source Jarvis is an AI assistant ecosystem built around a real-time voice-first runtime, a live visualizer, and a modular agent system. In the current setup, it runs with Open Code as the reasoning engine and (optionally) an attached Obsidian vault to provide memory for multi-turn context and retrieval-augmented behavior.
+Open Source Jarvis is an AI assistant ecosystem built around a real-time voice-first runtime, a live visualizer, and a modular agent system. In the current setup, it runs with Open Code as the reasoning layer, Whisper for speech-to-text, Kokoro for text-to-speech, and a browser-based visual mask that reflects the assistant state in real time.
 
 ## Core subsystems
 
 - `voice-line/` — Push-to-talk voice assistant named Doom. Handles STT, brain orchestration, TTS, and signal coordination.
 - `visualizer/` — Fullscreen browser scene that visualizes assistant state through a Doctor Doom-inspired metallic mask.
 - `agency_agents/` — Agent markdown library and task domain structure.
-- `docs/` — Unified documentation, setup, troubleshooting, and architecture notes (see docs/OBSIDIAN-INTEGRATION.md for memory integration).
-- `tests/` — Obsidian memory fixtures and CI-safe adapter tests.
+- `docs/` — Unified documentation, setup, troubleshooting, and architecture notes.
+- `tests/` — Deterministic memory adapter fixtures and CI-safe tests.
 - `.github/workflows/` — CI scaffolding for future validation.
 
 ## Current stack
 
 - STT: Whisper.cpp using the CUDA build and `ggml-small.en.bin`
 - Brain: Open Code CLI with `opencode/deepseek-v4-flash-free`
-- Memory: Obsidian vault (local filesystem) used as a persistent memory store when enabled
 - TTS: Kokoro FastAPI at `:8880` with voice `bm_daniel`
 - Input: Hold `Alt` to speak; release to send
 - IPC: File-based signal bus shared between voice and visual systems
 
 ## Obsidian memory
 
-The V1 memory adapter reads Markdown notes from an Obsidian vault, extracts simple frontmatter, creates embeddings through a replaceable provider, and persists a local JSON vector index. The standard-library implementation is CI-safe; optional production dependencies are available through the `memory` extra:
+The optional memory layer indexes a local Obsidian vault and injects the top
+three relevant notes into Open Code prompts with title, path, date, and a
+bounded snippet for auditability. The adapter has a standard-library dummy
+backend for CI and smoke tests, with optional Sentence Transformers and FAISS
+dependencies for local semantic search.
 
-```powershell
-cd voice-line
-pip install -e ".[memory]"
-```
+Hardware note: a GPU is recommended for Whisper and larger local models; CPU-only Whisper and the dummy embedding backend provide a slower but reproducible fallback.
 
-See [docs/OBSIDIAN-INTEGRATION.md](docs/OBSIDIAN-INTEGRATION.md) for setup, privacy guidance, and migration notes.
+- [Obsidian integration guide](docs/OBSIDIAN-INTEGRATION.md)
+- [Architecture diagram](docs/architecture-ai-jarvis.svg)
+- [Project memory runbook](docs/PROJECT-MEMORY.md)
 
 ## Working patterns and lessons learned
 
@@ -70,22 +59,11 @@ open-source-jarvis/
 
 ## Quick start
 
-1. Review the documentation in `docs/` (start with docs/QUICK-START.md and docs/OBSIDIAN-INTEGRATION.md if you plan to enable memory).
+1. Review the documentation in `docs/`.
 2. Set up the environment in `voice-line/`.
 3. Use the startup commands in the voice-line guide.
 4. Launch the visualizer and validate the signal bus state transitions.
 5. Reuse the operational patterns in `docs/SKILLS-AND-KNOWLEDGE.md` when debugging or extending the system.
-
-## Memory (Obsidian) — short notes
-
-If you've connected Open Code to an Obsidian vault to give the assistant long-term memory, the repository documents a recommended integration pattern in docs/OBSIDIAN-INTEGRATION.md. That document includes:
-
-- An architecture overview showing how the voice-line, Open Code brain, and a memory adapter interact with an Obsidian vault.
-- Recommended vault structure and note metadata for reliable retrieval.
-- A safe, local-only sync and embedding workflow (what to index, what to keep private).
-- Example environment variables and quick verification steps.
-
-If you'd like, I can add a runnable example adapter (e.g., `voice-line/memory_adapter.py`) that demonstrates simple read/write and retrieval calls against your Obsidian vault.
 
 ## Documentation index
 
@@ -96,6 +74,7 @@ If you'd like, I can add a runnable example adapter (e.g., `voice-line/memory_ad
 - [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 - [docs/SKILLS-AND-KNOWLEDGE.md](docs/SKILLS-AND-KNOWLEDGE.md)
 - [docs/OBSIDIAN-INTEGRATION.md](docs/OBSIDIAN-INTEGRATION.md)
+- [docs/PROJECT-MEMORY.md](docs/PROJECT-MEMORY.md)
 
 ## License
 

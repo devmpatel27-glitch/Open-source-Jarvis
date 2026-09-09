@@ -46,3 +46,17 @@ def test_hidden_markdown_is_excluded(tmp_path: Path) -> None:
     index = MemoryIndex.build(vault, DummyEmbedder())
 
     assert [entry.note.path for entry in index.entries] == ["visible.md"]
+
+
+def test_private_notes_are_excluded(tmp_path: Path) -> None:
+    vault = tmp_path / "vault"
+    vault.mkdir()
+    (vault / "private.md").write_text(
+        "---\nvisibility: private\n---\nsecret note",
+        encoding="utf-8",
+    )
+    (vault / "public.md").write_text("public note", encoding="utf-8")
+
+    index = MemoryIndex.build(vault, DummyEmbedder())
+
+    assert [entry.note.path for entry in index.entries] == ["public.md"]

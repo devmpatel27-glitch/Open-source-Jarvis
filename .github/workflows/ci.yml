@@ -17,16 +17,19 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: pip
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest
+          python -m pip install -r voice-line/requirements-ci.txt
 
       - name: Compile Python sources
         run: |
           python -m compileall voice-line
 
       - name: Run memory adapter tests
+        env:
+          EMBEDDING_BACKEND: dummy
         run: |
           python -m pytest -q
