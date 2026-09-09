@@ -1,5 +1,16 @@
-# Open Source Jarvis
+# Open Source Jarvis 🎙️
 
+A voice-first AI assistant that listens, reasons, and talks back — running entirely
+on local, self-hosted infrastructure (no cloud API required).
+
+
+## What it does
+- Push-to-talk voice input (hold Alt to speak, release to send)
+- Local speech-to-text via Whisper.cpp
+- LLM reasoning/orchestration via Open Code
+- Local text-to-speech via Kokoro
+- A browser-based visualizer that reflects assistant state in real time, synced
+  through a file-based signal bus
 Open Source Jarvis is an AI assistant ecosystem built around a real-time voice-first runtime, a live visualizer, and a modular agent system. In the current setup, it runs with Open Code as the reasoning layer, Whisper for speech-to-text, Kokoro for text-to-speech, and a browser-based visual mask that reflects the assistant state in real time.
 
 ## Core subsystems
